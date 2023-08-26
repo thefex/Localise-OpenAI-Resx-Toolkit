@@ -34,8 +34,11 @@ public class ResxResourcesProvider
             var resources = new Dictionary<string, string>();
             foreach (DictionaryEntry entry in resxReader)
                 resources.Add(entry.Key.ToString(), entry.Value.ToString());
-
-            yield return new ResourcesData(resxFile, languageCode, resources);
+            
+            yield return new ResourcesData(resxFile, languageCode, resources)
+            {
+                IsBaseResourcesData = languageCode == applicationParameters.DefaultResxCultureInfo
+            };
         }
     }
 }

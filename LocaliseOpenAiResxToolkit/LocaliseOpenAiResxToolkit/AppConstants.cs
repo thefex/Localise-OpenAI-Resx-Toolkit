@@ -7,6 +7,6 @@ public class AppConstants
         
     }
     
-    // 4096 max token count, -350 - so output fit in one output
-    public const int OpenAiMaximalTokenCount = 4096 - 350;
+    // 1000 max token count per choice
+    public const int OpenAiMaximalTokenCount = 1000;
 }

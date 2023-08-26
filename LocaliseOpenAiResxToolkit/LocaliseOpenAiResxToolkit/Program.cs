@@ -1,8 +1,13 @@
 ﻿using System.CommandLine;
 using System.CommandLine.Binding;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.Json.Serialization;
 using LocaliseOpenAiResxToolkit.Data;
 using LocaliseOpenAiResxToolkit.Services.Logger;
+using LocaliseOpenAiResxToolkit.Services.Refit;
+using Newtonsoft.Json;
+using Refit.Insane.PowerPack.Attributes;
 using Refit.Insane.PowerPack.Services;
 
 namespace LocaliseOpenAiResxToolkit
@@ -15,7 +20,7 @@ namespace LocaliseOpenAiResxToolkit
                 description: "Localise Resx with OpenAI GPT by Przemyslaw Raciborski [thefex].");
             var openaiTokenOption = new Option<string>(
                 aliases: new string[] { "--openai-token" }
-                , description: "OpenAI token"
+                , description: "OpenAI API key"
                 , getDefaultValue: () => string.Empty    
             );
             
@@ -55,10 +60,13 @@ namespace LocaliseOpenAiResxToolkit
 
             RestServiceBuilder builder =
                 new RestServiceBuilder()
-                    .WithAutoRetry()
                     .WithAutoRetry();
             
-            var resxLocalizationApp = new ResxLocalizationApp(builder.BuildRestService(applicationParameters.GetType().Assembly), applicationParameters);
+            var resxLocalizationApp = new ResxLocalizationApp(builder.BuildRestService(
+                new Dictionary<Type, DelegatingHandler>()
+                {
+                    { typeof(DefaultHttpDelegatingHandler), new HttpClientDiagnosticsHandler(new DefaultHttpDelegatingHandler()) }
+                }, applicationParameters.GetType().Assembly), applicationParameters);
             resxLocalizationApp.Initialize();
             
             try

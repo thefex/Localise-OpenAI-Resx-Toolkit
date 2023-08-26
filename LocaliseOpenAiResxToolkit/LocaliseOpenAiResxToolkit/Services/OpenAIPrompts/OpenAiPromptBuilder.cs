@@ -24,9 +24,7 @@ public class OpenAiPromptBuilder
 
             if (tokenCount > maximalTokenCount)
             {
-                
                 ConsoleLogger.Instance.LogInfo("OpenAiPromptBuilder: skipping prompt, translate it manually, too long: " + item.Key + " : " + item.Value);
-                    
                 continue;
             }
             
@@ -40,17 +38,17 @@ public class OpenAiPromptBuilder
             currentTokenCount += tokenCount;
             _currentPromptKeySet.Add(new KeyValuePair<string, string>(item.Key, item.Value));
         }        
+        
+        if (_currentPromptKeySet.Any())
+            yield return BuildPromptToTranslateResource(_currentPromptKeySet);
     }
+
+    public int GetTokenCount(IEnumerable<OpenAiPrompt> prompts) => prompts.Sum(x => GetApproximationOfTokenCount(x.Prompt));
 
     public OpenAiPrompt BuildSystemMessage(string targetLanguageCode)
     {
         const string systemPrompt =
-            "Following data will be provided list of:\n{ \"key\" : \"text value\" }.\n\nYour task is to translate " +
-            "\"key\" value into the language represented by following Culture Info \"[CULTUREINFO]\".\n\n" +
-            "You should never, under any circumstances! output anything other than list of:" +
-            "\n{ \"key\" : \"translated text value using [CULTUREINFO] culture info\" }\n\n" +
-            "If provided content is not a valid input - not something you can translate with key value pair" +
-            " - display \"ERROR_INVALID_INPUT\". ";
+            "Following data will be provided list of texts separated by $$$.\n\nYour task is to translate texts into the language represented by following Culture Info \"[CULTUREINFO]\", separate those entries by $$$.\n";
 
         return new OpenAiPrompt()
         {
@@ -64,15 +62,16 @@ public class OpenAiPromptBuilder
         StringBuilder userPromptBuilder = new StringBuilder();
 
         foreach (var item in currentPromptKeySet)
-            userPromptBuilder.Append("{ \"" + item.Key + "\" : \"" + item.Value + "\" }, " + Environment.NewLine);
+            userPromptBuilder.Append(item.Value + "$$$");
 
         var prompt = userPromptBuilder.ToString()
-            .Substring(0, userPromptBuilder.Length - ", ".Length - Environment.NewLine.Length);
+            .Substring(0, userPromptBuilder.Length - "$$$".Length);
 
         return new OpenAiPrompt()
         {
             IsSystemPrompt = false,
-            Prompt = prompt
+            Prompt = prompt,
+            KeysInSortedOrder = currentPromptKeySet.Select(x => x.Key).ToList()
         };
     }
 
@@ -85,11 +84,10 @@ public class OpenAiPromptBuilder
                 .Resources
                 .Keys
                 .Except(targetResources.Resources.Keys)
-                .ToHashSet();
+                .Select(key => new KeyValuePair<string, string>(key, baselineResources.Resources[key]));
 
-        return baselineResources
-            .Resources
-            .Where(x => keysToTranslate.Contains(x.Key))
-            .ToImmutableDictionary();
+        return
+            keysToTranslate
+                .ToImmutableDictionary();
     }
 }

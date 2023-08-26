@@ -8,7 +8,7 @@ public static class RefitApiConstants
 {
     public static class OpenAiApi
     {
-        public const int OpenAiApiTimeoutInSeconds = 30;
+        public const int OpenAiApiTimeoutInSeconds = 60*5;
         public const string Url = "https://api.openai.com/v1";
     }
 }

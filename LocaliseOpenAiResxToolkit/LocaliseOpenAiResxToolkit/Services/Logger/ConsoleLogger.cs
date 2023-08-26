@@ -26,14 +26,19 @@ public class ConsoleLogger
     public void LogInfo(params string[] info)
     {
         System.Console.ForegroundColor = ConsoleColor.Blue;
-        System.Console.WriteLine(info);
+        foreach (var infoValue in info) 
+            Console.WriteLine(infoValue);
+        
         Console.WriteLine("----------------------------------");
         System.Console.ResetColor();
     }
     
     public void LogSuccess(params string[] success){
         System.Console.ForegroundColor = ConsoleColor.Green;
-        System.Console.WriteLine(success);
+
+        foreach (var successValue in success) 
+            System.Console.WriteLine(successValue);
+
         Console.WriteLine("----------------------------------");
         System.Console.ResetColor();
     }

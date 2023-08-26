@@ -1,5 +1,8 @@
+using System.Collections;
 using System.Resources.NetStandard;
+using System.Text;
 using LocaliseOpenAiResxToolkit.Data;
+using LocaliseOpenAiResxToolkit.Services.Logger;
 
 namespace LocaliseOpenAiResxToolkit.Services.Resources;
 
@@ -22,9 +25,22 @@ public class ResxResourcesUpdater
     {
         foreach (var resxFile in _translatedDataToBeCommited)
         {
+            using (var resxReader = new ResXResourceReader(resxFile.Key))
+            {
+                foreach (DictionaryEntry entry in resxReader)
+                    resxFile.Value.TryAdd(entry.Key.ToString(), entry.Value.ToString());
+            }
+            
             using (var resxWriter = new ResXResourceWriter(resxFile.Key))
             {
-                resxWriter.AddResource(resxFile.Key, resxFile.Value);
+                StringBuilder keys = new StringBuilder();
+                foreach (var (key, value) in resxFile.Value)
+                {
+                    keys.Append(key + ", ");
+                    resxWriter.AddResource(key, value);
+                }
+                
+                ConsoleLogger.Instance.LogSuccess("ResxResourcesUpdater: updating file " + resxFile.Key + ", following keys were saved: " + keys);
                 resxWriter.Generate();
             }
         }
